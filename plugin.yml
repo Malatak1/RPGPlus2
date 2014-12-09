@@ -1,0 +1,8 @@
+name: RPGPlus
+main: net.swordsofvalor.rpgplus.RPGPlus
+version: 0.0
+
+commands:
+   skills:
+      description: Lists player skills
+      usage: /skills
