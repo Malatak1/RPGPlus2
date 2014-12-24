@@ -50,8 +50,12 @@ public class FireworkEffectPlayer {
      * @throws Exception
      */
     
-    public static void playFirework(World world, Location loc, FireworkEffect fe) throws Exception {
-    	new FireworkEffectPlayer().playSynchronizedFirework(world, loc, fe);
+    public static void playFirework(World world, Location loc, FireworkEffect fe) {
+    	try {
+    		new FireworkEffectPlayer().playSynchronizedFirework(world, loc, fe);
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    	}
     }
     
     public synchronized void playSynchronizedFirework(World world, Location loc, FireworkEffect fe) throws Exception {

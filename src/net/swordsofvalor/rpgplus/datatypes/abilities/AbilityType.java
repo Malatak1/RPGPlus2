@@ -17,7 +17,7 @@ public final class AbilityType {
 		return null;
 	}
 	
-	public static int convert(String name) {
+	public static int valueOf(String name) {
 		switch (name) {
 		case "LIGHT": return 0;
 		case "MEDIUM": return 1;

@@ -30,6 +30,7 @@ public class PlayerData extends YamlConfiguration {
 				this.createSection("Skills." + skill.name());
 				this.set("Skills." + skill.name() + ".Level", 1);
 				this.set("Skills." + skill.name() + ".Experience", 0.0);
+				this.set("Skills." + skill.name() + ".SkillPoints", 1);
 			}
 		}
 		abilities = new AbilitiesManager(p, this);

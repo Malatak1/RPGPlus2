@@ -19,19 +19,27 @@ public abstract class Ability {
 	protected String name;
 	protected String[] description;
 	protected ItemStack icon;
-	protected SkillType skillType;
+	protected SkillTree skillTree;
 	protected int abilityType;
 	
 	protected int cooldownTime = 0;
 	protected int manaCost = 0;
 	protected int staminaCost = 0;
 	
-	public Ability(String name, SkillType type, int abilityType, ItemStack icon, String... description) {
+	public Ability(String name, SkillTree type, int abilityType, ItemStack icon, String... description) {
 		this.name = name;
-		this.skillType = type;
+		this.skillTree = type;
 		this.icon = icon;
 		this.abilityType = abilityType;
 		this.description = description;
+	}
+	
+	public static List<Ability> getAbilitiesOfType(int abilityType) {
+		List<Ability> list = new ArrayList<>();
+		for (Ability ability : ABILITY_LIST) {
+			if (ability.getAbilityType() == abilityType) list.add(ability);
+		}
+		return list;
 	}
 	
 	public static Ability getAbilityByName(String name) {
@@ -45,8 +53,12 @@ public abstract class Ability {
 		return name;
 	}
 	
+	public SkillTree getSkillTree() {
+		return skillTree;
+	}
+	
 	public SkillType getSkillType() {
-		return skillType;
+		return skillTree.getSkillType();
 	}
 	
 	public int getAbilityType() {

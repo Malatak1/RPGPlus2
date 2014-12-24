@@ -1,5 +1,7 @@
 package net.swordsofvalor.rpgplus.runnables;
 
+import net.swordsofvalor.rpgplus.util.player.PlayerUtil;
+
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -20,15 +22,13 @@ public class StatsRegenerator extends RPGRunnable {
 	
 	private void regenerateStamina() {
 		for (Player p : Bukkit.getOnlinePlayers()) {
-			//TODO: implementation
-			p.getExp();
+			PlayerUtil.setStamina(p, PlayerUtil.getStamina(p) + 0.01F);
 		}
 	}
 	
 	private void regenerateMana() {
 		for (Player p : Bukkit.getOnlinePlayers()) {
-			//TODO: implementation
-			p.getLevel();
+			PlayerUtil.setMana(p, PlayerUtil.getMana(p) + 1);
 		}
 	}
 	

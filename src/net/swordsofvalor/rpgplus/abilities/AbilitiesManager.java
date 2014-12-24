@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.bukkit.Material;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -15,14 +16,18 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.ItemStack;
 
+import net.minecraft.util.org.apache.commons.lang3.ArrayUtils;
 import net.swordsofvalor.rpgplus.RPGPlus;
+import net.swordsofvalor.rpgplus.database.DatabaseManager;
 import net.swordsofvalor.rpgplus.datatypes.abilities.AbilityType;
 import net.swordsofvalor.rpgplus.datatypes.player.PlayerData;
 import net.swordsofvalor.rpgplus.datatypes.skills.SkillType;
+import net.swordsofvalor.rpgplus.iconmenu.IconMenu;
 import net.swordsofvalor.rpgplus.util.player.PlayerUtil;
+import net.swordsofvalor.rpgplus.util.text.TextOutput;
 
-@SuppressWarnings("deprecation")
 public class AbilitiesManager implements Listener {
 	
 	public final Map<Ability, Integer> ABILITY_MAP = new HashMap<>();
@@ -35,7 +40,32 @@ public class AbilitiesManager implements Listener {
 		this.player = player;
 		this.playerData = playerData;
 		loadAbilitiesFromFile();
-		RPGPlus.getInstance().registerListener(this);
+		if (playerData.getAbilities() == null)
+			RPGPlus.getInstance().registerListener(this);
+	}
+	
+	public AbilitiesManager(Player player) {
+		this(player, DatabaseManager.getPlayerData(player));
+	}
+	
+	public ItemStack getFormattedIcon(Ability ability, String[] infoText) {
+		ItemStack icon;
+		if (getAbilityLevel(ability) > 0) {
+			icon = ability.getIcon();
+			icon.setAmount(getAbilityLevel(ability));
+		} else {
+			icon = new ItemStack(Material.ENDER_PEARL);
+		}
+		return IconMenu.setItemNameAndLore(icon, IconMenu.formatText("@t" + ability.getName()),
+				IconMenu.formatText(ArrayUtils.addAll(TextOutput.abilityInfo(ability.getInfo()), infoText)));
+	}
+	
+	public ItemStack getFormattedIcon(Ability ability, String infoText) {
+		return getFormattedIcon(ability, new String[]{"",infoText});
+	}
+	
+	public ItemStack getFormattedIcon(Ability ability) {
+		return getFormattedIcon(ability, new String[]{});
 	}
 	
 	public void closeAbilities() {
@@ -43,9 +73,18 @@ public class AbilitiesManager implements Listener {
 		HandlerList.unregisterAll(this);	
 	}
 	
+	public int getAbilityLevel(Ability ability) {
+		return playerData.getInt("Skills." + ability.getSkillType().name() + ".Abilities." + ability.getName().toLowerCase());
+	}
+	
+	public void setAbilityLevel(Ability ability, int level) {
+		playerData.set("Skills." + ability.getSkillType().name() + ".Abilities." + ability.getName().toLowerCase(), level);
+	}
+	
 	private void loadAbilitiesFromFile() {
 		for (SkillType section : SkillType.values()) {
-			if (!playerData.contains("Skills." + section.name() + ".Abilities")) playerData.createSection("Skills." + section.name() + ".Abilities");
+			if (!playerData.contains("Skills." + section.name() + ".Abilities"))
+				playerData.createSection("Skills." + section.name() + ".Abilities");
 			for (String ability : playerData.getConfigurationSection("Skills." + section.name() + ".Abilities").getKeys(false)) {
 				ABILITY_MAP.put(Ability.getAbilityByName(ability), playerData.getInt("Skills." + section.name() + ".Abilities." + ability));
 			}
@@ -59,7 +98,7 @@ public class AbilitiesManager implements Listener {
 		for (String type : AbilityType.values()) {
 			String ability = playerData.getString("ActiveAbilities." + type.toLowerCase());
 			if (!ability.equals("empty")) {
-				EQUIPPED_ABILITIES[AbilityType.convert(type)] = Ability.getAbilityByName(ability);
+				EQUIPPED_ABILITIES[AbilityType.valueOf(type)] = Ability.getAbilityByName(ability);
 			}
 		}
 	}
@@ -74,9 +113,9 @@ public class AbilitiesManager implements Listener {
 			it.remove();
 		}
 		for (String type : AbilityType.values()) {
-			Ability ability = EQUIPPED_ABILITIES[AbilityType.convert(type)];
+			Ability ability = EQUIPPED_ABILITIES[AbilityType.valueOf(type)];
 			if (ability != null) {
-				playerData.set("ActiveAbilities." + type.toLowerCase(), ability.getName());
+				playerData.set("ActiveAbilities." + type.toLowerCase(), ability.getName().toLowerCase());
 			} else {
 				playerData.set("ActiveAbilities." + type.toLowerCase(), "empty");
 			}
@@ -149,13 +188,17 @@ public class AbilitiesManager implements Listener {
 	public void onProjectileHit(ProjectileHitEvent event) {
 		if (event.getEntity() instanceof Arrow) {
 			if (event.getEntity().getShooter().equals(player)) {
-				if (event.getEntity().hasMetadata("ability." + EQUIPPED_ABILITIES[AbilityType.MEDIUM].getName())) {
-					Ability ability = EQUIPPED_ABILITIES[AbilityType.MEDIUM];
-					if (ability != null) ability.onArrowHit(event, player, 1);
+				if (EQUIPPED_ABILITIES[AbilityType.MEDIUM] != null) {
+					if (event.getEntity().hasMetadata("ability." + EQUIPPED_ABILITIES[AbilityType.MEDIUM].getName())) {
+						Ability ability = EQUIPPED_ABILITIES[AbilityType.MEDIUM];
+						if (ability != null) ability.onArrowHit(event, player, 1);
+					}
 				}
-				if (event.getEntity().hasMetadata("ability." + EQUIPPED_ABILITIES[AbilityType.ULTIMATE].getName())) {
-					Ability ability = EQUIPPED_ABILITIES[AbilityType.ULTIMATE];
-					if (ability != null) ability.onArrowHit(event, player, 1);
+				if (EQUIPPED_ABILITIES[AbilityType.MEDIUM] != null) {
+					if (event.getEntity().hasMetadata("ability." + EQUIPPED_ABILITIES[AbilityType.ULTIMATE].getName())) {
+						Ability ability = EQUIPPED_ABILITIES[AbilityType.ULTIMATE];
+						if (ability != null) ability.onArrowHit(event, player, 1);
+					}
 				}
 			}
 		}
@@ -211,11 +254,14 @@ public class AbilitiesManager implements Listener {
 	private boolean canCast(Player p, Ability ability) {
 		if (ability == null) return false;
 		if (PlayerUtil.isOnGlobalCooldown(p)) return false;
-		else return true;
+		if ((PlayerUtil.getStamina(p) * 100) - ability.getStaminaCost() < 0) return false;
+		if (PlayerUtil.getMana(p) - ability.getManaCost() < 0) return false;
+		return true;
 	}
 	
 	private void handleCast(Player p, Ability ability) {
-		
+		PlayerUtil.setMana(p, PlayerUtil.getMana(p) - ability.getManaCost());
+		PlayerUtil.setStamina(p, PlayerUtil.getStamina(p) - (ability.getStaminaCost() / 100.0F));
 	}
 	
 }

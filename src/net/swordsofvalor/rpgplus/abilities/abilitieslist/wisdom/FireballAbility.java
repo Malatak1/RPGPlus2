@@ -13,8 +13,8 @@ import org.bukkit.projectiles.ProjectileSource;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import net.swordsofvalor.rpgplus.abilities.Ability;
+import net.swordsofvalor.rpgplus.abilities.SkillTree;
 import net.swordsofvalor.rpgplus.datatypes.abilities.AbilityType;
-import net.swordsofvalor.rpgplus.datatypes.skills.SkillType;
 import net.swordsofvalor.rpgplus.util.player.PlayerUtil;
 import net.swordsofvalor.rpgplus.util.player.VectorUtil;
 import net.swordsofvalor.rpgplus.util.synchronization.Scheduling;
@@ -22,11 +22,14 @@ import net.swordsofvalor.rpgplus.util.synchronization.Scheduling;
 public class FireballAbility extends Ability {
 	
 	public FireballAbility() {
-		super("Fireball", SkillType.WISDOM, AbilityType.MEDIUM, new ItemStack(Material.FIREBALL),
-				"(desc)",
-				"(more)");
+		super("Fireball", SkillTree.ELEMENTALIST, AbilityType.MEDIUM, new ItemStack(Material.FIREBALL),
+				"@desc Shoots an explosive fireball in a target direction. Fireball will explode upon impact with an obstruction"
+				+ " or hostile entity. Can be detonated earlier by casting again. Explosion yield scales with power.",
+				"@mana 10",
+				"@cooldown 120",
+				"@type Projectile AoE");
 		this.manaCost = 10;
-		this.cooldownTime = 6;
+		this.cooldownTime = 40;
 	}
 	
 	@Override
@@ -56,7 +59,7 @@ public class FireballAbility extends Ability {
 					public void run() {
 						fireball.getWorld().playEffect(fireball.getLocation(), Effect.MOBSPAWNER_FLAMES, 5);
 						fireball.getWorld().playEffect(fireball.getLocation(), Effect.SMOKE, 5);
-						if (c > 300) this.cancel();
+						if (c > 300 || fireball.isDead()) this.cancel();
 						c++;
 					}
 				}, 2, 5);
